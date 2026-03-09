@@ -97,24 +97,20 @@ def backpropagate(variable: Variable, deriv: Any) -> None:
     No return. Should write to its results to the derivative values of each leaf through `accumulate_derivative`.
     """
     topological_list = topological_sort(variable)
-    topological_list[0].derivative = deriv
+    derivative_dict = {}
+    derivative_dict[variable.unique_id] = deriv
     for var in topological_list:
         if var.is_leaf():
             continue
-        back = var.chain_rule(var.derivative)
+        back = var.chain_rule(derivative_dict[var.unique_id])
         for pair in back:
-            for i in range(len(topological_list)):
-                if (topological_list[i] is pair[0]):
-                    if topological_list[i].is_leaf():
-                        topological_list[i].accumulate_derivative(pair[1])
-                    else:
-                        if topological_list[i].derivative is None:
-                            topological_list[i].derivative = pair[1]
-                        else:
-                            topological_list[i].derivative += pair[1]
-                    break
-
-
+            if pair[0].is_leaf():
+                pair[0].accumulate_derivative(pair[1])
+            else:
+                if pair[0].unique_id in derivative_dict:
+                    derivative_dict[pair[0].unique_id] += pair[1]
+                else:
+                    derivative_dict[pair[0].unique_id] = pair[1]
 
 @dataclass
 class Context:
