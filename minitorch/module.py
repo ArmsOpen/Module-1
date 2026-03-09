@@ -33,29 +33,35 @@ class Module:
         """Set the mode of this module and all descendent modules to `train`."""
         self.training = True
         eval_list = []
+        visited_list = [self]
         if self.__dict__["_modules"]:
             for k, v in self.__dict__["_modules"].items():
                 eval_list.append((k, v))
             while(eval_list):
                 k, v = eval_list.pop()
                 v.training = True
+                visited_list.append(v)
                 if v.__dict__["_modules"]:
                     for key, value in v.__dict__["_modules"].items():
-                        eval_list.append((key, value))
+                        if value not in visited_list and value not in eval_list:
+                            eval_list.append((key, value))
 
     def eval(self) -> None:
         """Set the mode of this module and all descendent modules to `eval`."""
         self.training = False
         eval_list = []
+        visited_list = [self]
         if self.__dict__["_modules"]:
             for k, v in self.__dict__["_modules"].items():
                 eval_list.append((k, v))
             while(eval_list):
                 k, v = eval_list.pop()
                 v.training = False
+                visited_list.append(v)
                 if v.__dict__["_modules"]:
                     for key, value in v.__dict__["_modules"].items():
-                        eval_list.append((key, value))
+                        if value not in visited_list and value not in eval_list:
+                            eval_list.append((key, value))
                 
 
     def named_parameters(self) -> Sequence[Tuple[str, Parameter]]:
@@ -70,6 +76,7 @@ class Module:
         for k, v in self.__dict__["_parameters"].items():
             parameters_list.append((k, v))
         name_list = []
+        visited_list = [self]
         if self.__dict__["_modules"]:
             for k, v in self.__dict__["_modules"].items():
                 name_list.append((k, v))
@@ -77,9 +84,11 @@ class Module:
             name, module = name_list.pop()
             for k, v in module.__dict__["_parameters"].items():
                 parameters_list.append((name+"."+k, v))
+            visited_list.append(module)
             if module.__dict__["_modules"]:
                 for key, value in module.__dict__["_modules"].items():
-                    name_list.append((name+"."+key, value))
+                    if value not in visited_list and value not in name_list:
+                        name_list.append((name+"."+key, value))
         return parameters_list
 
     def parameters(self) -> Sequence[Parameter]:
