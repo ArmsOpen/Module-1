@@ -164,7 +164,6 @@ class Scalar:
         assert h.ctx is not None
 
         result = h.last_fn._backward(h.ctx, d_output)
-
         back = []
         for i in range(len(h.inputs)):
             back.append((h.inputs[i], result[i]))
